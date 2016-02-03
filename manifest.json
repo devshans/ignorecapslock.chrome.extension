@@ -3,13 +3,12 @@
 
     "name": "Ignore Caps Lock",
     "description": "This plugin detects when caps lock is being used and reverses the case of each character entered.",
-    "version": "0.8",
+    "version": "0.9",
 
     "permissions": [
 	"background",
 	"tabs",
-	"http://*/*", 
-	"https://*/*"    
+	"*://*.google.com/"
     ],
     "icons": {
 	"16":  "images/icon_enable16.png",

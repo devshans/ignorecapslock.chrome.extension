@@ -3,7 +3,7 @@
  * @package    : Ignore Caps Lock Chrome Extension
  * @author     : devshans
  * @copyright  : 2016, devshans
- * @license    : The MIT License (MIT) - see LICENSE.TXT
+ * @license    : The MIT License (MIT) - see LICENSE
  * @description: Extension content script
  *   Enabled/Disabled from ignorecapslock.background.js
  *   Listens on keystroke inputs and reverses the effect of caps lock if detected.
@@ -83,11 +83,9 @@ var CapsLock = new function(){
 	if (!(elem.type == "textarea" || elem.type == "text")) {
 	    if (elem.isContentEditable) {
 		isContentEditableDiv = true;
-		// First character in div, text node doesn't exist yet so create one.
-		// if (elem.childNodes.length == 0) { 
-		//     var textnode = document.createTextNode("");
-		//     elem.appendChild(textnode);
-		// }
+
+		// Walk down the DOM until the last non-textarea element if found.
+		// (Stop at the end of a <span>/<div> tree.)
 		contentEditableElem = elem;
 		while (contentEditableElem && contentEditableElem.childNodes.length > 0 &&
 		       (contentEditableElem.childNodes[0].nodeName.toLowerCase() == "div" ||
@@ -95,8 +93,8 @@ var CapsLock = new function(){
 		    contentEditableElem = contentEditableElem.childNodes[0];
 
 		// Special case for Facebook
-		//   Initializes an empty <br> inside span that is updated
-		//   to a span when text is entered.
+		//   Initializes an empty <br> inside <span> element that is updated
+		//   to a nested <span> when text is entered.
 		if (contentEditableElem && contentEditableElem.childNodes.length > 0 &&
 		    contentEditableElem.childNodes[0].nodeName.toLowerCase() == "br") {
 		    var node = document.createElement("span");
@@ -115,15 +113,17 @@ var CapsLock = new function(){
 	    }
 	}
 	
-        // Determine the character code
+        // Determine the character code from the keyboard input key.
         charCode = (evnt.charCode ? evnt.charCode : evnt.keyCode);
 	if (DEBUG) console.log("charCode: " + charCode);		
 
-        // Store whether the caps lock key is down
+        // Store whether the caps lock key is down...
         if (charCode >= 97 && charCode <= 122){
 	    capsLock = evnt.shiftKey;
 	    charKey = String.fromCharCode(charCode);
-        }else if (charCode >= 65 && charCode <= 90
+        }
+	// ... or not.
+	else if (charCode >= 65 && charCode <= 90
 		  && !(evnt.shiftKey && /Mac/.test(navigator.platform))){
 	    capsLock = !evnt.shiftKey;
 	    charKey = String.fromCharCode(charCode);
@@ -137,6 +137,7 @@ var CapsLock = new function(){
 	if (DEBUG) console.log("Found alphabet character.");
 	if (DEBUG) console.log("capsLock: " + capsLock + " charKey: " + charKey);
 
+	// We need to make a modification to the case of the character entered.
 	if (capsLock) {
 
 	    // Content editable divs are a bit annoying.
@@ -154,9 +155,10 @@ var CapsLock = new function(){
 		divText = [divText.slice(0, range.startOffset), charKey, divText.slice(range.endOffset)].join('');
 		
 		cursorPosition = range.startOffset + 1;
-		doHandleInput = true;
-		
 		if (DEBUG) console.log("cursorPosition: " + cursorPosition);
+
+		doHandleInput = true;
+
 		modifiedText = getModifiedText(charCode,
 					       charKey,
 					       evnt,
@@ -165,8 +167,13 @@ var CapsLock = new function(){
 		
 		// Try to do this once, can be done again later in event lifecycle
 		//   in handleInput if overwritten.
+		// This handles the case where an input event isn't fired later after keypress
+		//   but the text isn't overwritten either.
 		contentEditableElem.innerHTML = modifiedText;
 		setCursorPosition(contentEditableElem, cursorPosition);
+		// It's possible where's there's a case that an input event isn't fired BUT
+		//   the text is overwritten. We'll need to handle that if it is seen in a
+		//   supported applications.
 	    }
 
 	    // A more straightforward text/textarea input element.
@@ -251,7 +258,7 @@ var CapsLock = new function(){
      * 
      * @param: charCode       - Numeric code of key pressed.
      * @param: charKey        - ASCII value of key pressed.
-     * @param: evnt           - Event that triggered the calling function.
+     * @param: evnt           - Calling function that triggered the event.
      * @param: inputText      - Full text to modify.
      * @param: cursorPosition - Current index of the cursor in the text.
      */    

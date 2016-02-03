@@ -3,7 +3,7 @@
  * @package    : Ignore Caps Lock Chrome Extension
  * @author     : devshans
  * @copyright  : 2016, devshans
- * @license    : The MIT License (MIT) - see LICENSE.TXT
+ * @license    : The MIT License (MIT) - see LICENSE
  * @description: Background service for capslock.extension.js
  *   Communicates user input for enable/disable to content script.
  */
